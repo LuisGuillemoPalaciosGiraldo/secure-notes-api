@@ -1,0 +1,1 @@
+"""Secure Notes API package."""

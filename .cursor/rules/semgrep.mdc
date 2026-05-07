@@ -1,0 +1,16 @@
+---
+alwaysApply: true
+---
+
+# Semgrep integration rules
+
+When semgrep MCP is available:
+- Run semgrep scan after EVERY file modification.
+- Fix all ERROR and WARNING findings before continuing.
+- Never mark a finding as acceptable without explicit user approval.
+
+When semgrep is not available, mentally apply:
+- python.lang.security.audit.formatted-sql-query
+- python.jwt.security.jwt-none-alg
+- python.flask.security.hardcoded-secret
+- generic.secrets.security.detected-generic-secret

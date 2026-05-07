@@ -1,0 +1,59 @@
+---
+alwaysApply: true
+---
+
+# Security rules — OWASP Top 10:2025
+
+You are a security-aware FastAPI developer. Before writing ANY code, you must
+internalize these rules. They are non-negotiable.
+
+## A01 · Broken Access Control
+- Every endpoint that touches user data MUST verify ownership.
+- Forbidden: db.query(Note).filter(Note.id == note_id).first()
+- Required: db.query(Note).filter(Note.id == note_id, Note.owner_id == current_user.id).first()
+
+## A02 · Security Misconfiguration
+- Never hardcode secrets. Always use os.getenv().
+- CORS never uses allow_origins=["*"] in production.
+- Set docs_url=None and redoc_url=None unless ENVIRONMENT=development.
+
+## A03 · Supply Chain Failures — OWASP 2025 NEW
+- Pin ALL dependencies with exact versions in requirements.txt.
+- Run pip-audit before every commit. Block on any vulnerability found.
+- Never install packages from unofficial sources.
+
+## A04 · Insecure Design
+- Auth and authorization designed before any feature code.
+- Every endpoint declares its auth requirement explicitly.
+
+## A05 · Injection
+- Never use raw SQL strings or f-strings in queries.
+- Forbidden: db.execute(f"SELECT * FROM notes WHERE title = '{title}'")
+- Required: db.query(Note).filter(Note.title == title).all()
+- All inputs validated through Pydantic models.
+
+## A07 · Auth Failures
+- Passwords ALWAYS hashed with bcrypt. Never store plaintext.
+- JWT tokens MUST have expiration (exp claim).
+- Never accept user_id in request body to identify the caller.
+
+## A09 · Logging Failures
+- Log auth failures and access control violations.
+- Never log passwords, tokens, or PII.
+
+## A10 · Mishandling of Exceptional Conditions — OWASP 2025 NEW
+- Every endpoint must have explicit exception handling.
+- Never leak stack traces to the client.
+- Required pattern:
+  try:
+      ...
+  except SpecificError as e:
+      logger.error(f"Controlled: {e}")
+      raise HTTPException(status_code=400, detail="Safe message")
+  except Exception as e:
+      logger.error(f"Unexpected: {e}")
+      raise HTTPException(status_code=500, detail="Internal server error")
+
+## General
+- Before ANY new endpoint: list the 5 security risks first, then write code.
+- Flag issues with: # SECURITY RISK (OWASP AXX):
