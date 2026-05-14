@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Secure Notes API — seguridad construida desde el primer prompt. FastAPI, OWASP 2025 y vibe coding consciente." />
+  <title>Secure Notes API | Secure Vibe Coding</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap");
+
+    :root {
+      --bg-deep: #0a0a0c;
+      --bg-card: #12121a;
+      --bg-elevated: #181822;
+      --border: rgba(255, 255, 255, 0.06);
+      --text: #e8e8ed;
+      --text-muted: #8b8b9a;
+      --accent: #a78bfa;
+      --accent-dim: #7c3aed;
+      --accent-green: #34d399;
+      --accent-glow: rgba(167, 139, 250, 0.35);
+      --font: "DM Sans", system-ui, -apple-system, sans-serif;
+      --radius: 14px;
+      --max: 1080px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg-deep);
+      color: var(--text);
+      line-height: 1.65;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .noise {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      opacity: 0.03;
+      z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .gradient-orb {
+      position: fixed;
+      width: 60vw;
+      height: 60vw;
+      max-width: 900px;
+      max-height: 900px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      top: -20%;
+      right: -15%;
+      z-index: 0;
+      filter: blur(80px);
+      opacity: 0.5;
+    }
+
+    .gradient-orb-2 {
+      bottom: -10%;
+      left: -20%;
+      top: auto;
+      right: auto;
+      background: radial-gradient(circle, rgba(52, 211, 153, 0.12) 0%, transparent 65%);
+    }
+
+    header {
+      position: relative;
+      z-index: 2;
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text);
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    header a.nav {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    header a.nav:hover {
+      color: var(--accent);
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+    }
+
+    section {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 4rem 1.5rem;
+    }
+
+    .hero {
+      padding-top: 2rem;
+      padding-bottom: 5rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-green);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.25rem, 5vw, 3.35rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.12;
+      max-width: 18ch;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-green) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero .sub {
+      font-size: 1.125rem;
+      color: var(--text-muted);
+      max-width: 36rem;
+      margin-bottom: 2rem;
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.9rem 1.5rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-dim) 0%, var(--accent) 100%);
+      color: #0a0a0c;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 12px 40px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15), 0 16px 48px var(--accent-glow);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: rgba(167, 139, 250, 0.4);
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    h2 {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+    }
+
+    .problem .card p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    .problem .card p + p {
+      margin-top: 1rem;
+    }
+
+    .layers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+      margin-top: 2rem;
+    }
+
+    .layer-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+
+    .layer-card:hover {
+      border-color: rgba(167, 139, 250, 0.25);
+      transform: translateY(-4px);
+    }
+
+    .layer-card .icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      background: var(--bg-elevated);
+      color: var(--accent);
+    }
+
+    .layer-card:nth-child(2) .icon {
+      color: var(--accent-green);
+    }
+
+    .layer-card:nth-child(3) .icon {
+      color: #c4b5fd;
+    }
+
+    .layer-card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .layer-card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 1.5rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th,
+    td {
+      padding: 1rem 1.1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--bg-elevated);
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr {
+      background: var(--bg-card);
+      transition: background 0.2s;
+    }
+
+    tbody tr:hover {
+      background: #1a1a26;
+    }
+
+    .highlight-a03 td,
+    .highlight-a10 td {
+      background: rgba(167, 139, 250, 0.08);
+      border-left: 3px solid var(--accent);
+    }
+
+    .highlight-a03 td:first-child,
+    .highlight-a10 td:first-child {
+      font-weight: 600;
+      color: var(--accent-green);
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--accent-green);
+      margin-left: 0.35rem;
+      vertical-align: middle;
+    }
+
+    .demo {
+      text-align: center;
+    }
+
+    .demo .card {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem;
+    }
+
+    .demo p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .demo-url {
+      font-family: ui-monospace, monospace;
+      font-size: 0.8rem;
+      color: var(--accent);
+      word-break: break-all;
+      margin-bottom: 1.25rem;
+    }
+
+    footer {
+      position: relative;
+      z-index: 2;
+      border-top: 1px solid var(--border);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    footer .sep {
+      margin: 0 0.5rem;
+      opacity: 0.4;
+    }
+
+    [data-reveal] {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    [data-reveal].visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="gradient-orb" aria-hidden="true"></div>
+  <div class="gradient-orb gradient-orb-2" aria-hidden="true"></div>
+
+  <header>
+    <div class="logo">Secure Notes <span>API</span></div>
+    <a class="nav" href="#demo">Demo</a>
+  </header>
+
+  <main>
+    <section class="hero" data-reveal>
+      <div class="badge">Secure Vibe Coding</div>
+      <h1>Seguridad construida desde el <em>primer prompt</em></h1>
+      <p class="sub">
+        Una API de notas pensada para equipos que usan IA en el día a día: reglas, auditoría y cadena de suministro
+        alineados con OWASP 2025, sin sacrificar velocidad de entrega.
+      </p>
+      <div class="cta-row">
+        <a
+          class="btn btn-primary"
+          href="https://secure-notes-api-production-7360.up.railway.app/docs"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Ver documentación OpenAPI
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M7 17L17 7M17 7H7M17 7V17" />
+          </svg>
+        </a>
+        <a class="btn btn-ghost" href="#solucion">Cómo lo hacemos</a>
+      </div>
+    </section>
+
+    <section class="problem" id="problema" data-reveal>
+      <p class="section-label">El problema</p>
+      <h2>El vibe coding genera código inseguro por defecto</h2>
+      <div class="card" style="margin-top: 1.5rem">
+        <p>
+          Los asistentes optimizan por <strong style="color: var(--text)">velocidad y completitud</strong>, no por modelo de amenazas.
+          Sin contexto explícito, es frecuente ver validaciones laxas, fugas en logs, JWT mal configurados o dependencias sin pinado.
+        </p>
+        <p>
+          El riesgo no es “usar IA”, sino <strong style="color: var(--text)">no anclar el prompt al estándar de seguridad del producto</strong>.
+          Secure Notes API es un ejemplo de cómo integrar esa capa desde el repositorio y el flujo de desarrollo.
+        </p>
+      </div>
+    </section>
+
+    <section id="solucion" data-reveal>
+      <p class="section-label">La solución</p>
+      <h2>Tres capas antes de que el código toque producción</h2>
+      <div class="layers">
+        <article class="layer-card">
+          <div class="icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <h3>Cursor Rules + OWASP 2025</h3>
+          <p>
+            Reglas persistentes en el IDE que obligan a ownership en consultas, JWT con exp, sin secretos en código y manejo de errores sin fugas al cliente.
+          </p>
+        </article>
+        <article class="layer-card">
+          <div class="icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+          </div>
+          <h3>Audit prompt antes de escribir</h3>
+          <p>
+            Checklist mental (y en chat) para cada endpoint: acceso, authz, inyección, logging y condiciones excepcionales — alineado con OWASP Top 10:2025.
+          </p>
+        </article>
+        <article class="layer-card">
+          <div class="icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M3 9h18M9 21V9" />
+            </svg>
+          </div>
+          <h3>pip-audit (Supply Chain · A03)</h3>
+          <p>
+            Dependencias fijadas por versión y auditoría automatizada para bloquear vulnerabilidades conocidas en la cadena de suministro.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="owasp" data-reveal>
+      <p class="section-label">Marco de referencia</p>
+      <h2>OWASP 2025 frente a 2021</h2>
+      <p style="color: var(--text-muted); max-width: 42rem; margin-top: 0.5rem">
+        La edición 2025 incorpora categorías nuevas. Destacamos <strong style="color: var(--accent-green)">A03</strong> y <strong style="color: var(--accent)">A10</strong> en la tabla.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>OWASP 2021</th>
+              <th>OWASP 2025</th>
+              <th>Nota</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>A01 Broken Access Control</td>
+              <td>A01 Broken Access Control</td>
+              <td>Sigue en el top; ownership obligatorio en cada query.</td>
+            </tr>
+            <tr class="highlight-a03">
+              <td>A06 Vulnerable Components</td>
+              <td>A03 Supply Chain Failures <span class="tag">NUEVO</span></td>
+              <td>Amplía componentes vulnerables a cadena completa (build, deps, pipelines).</td>
+            </tr>
+            <tr>
+              <td>A09 Security Logging Failures</td>
+              <td>A09 Logging Failures</td>
+              <td>Énfasis en detección y trazabilidad sin exponer secretos.</td>
+            </tr>
+            <tr class="highlight-a10">
+              <td>A10 SSRF</td>
+              <td>A10 Mishandling Exceptional Conditions <span class="tag">NUEVO</span></td>
+              <td>Errores y estados límite como vector (timeouts, reintentos, mensajes al cliente).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="demo" id="demo" data-reveal>
+      <p class="section-label">Demo en vivo</p>
+      <h2>Prueba la API desplegada</h2>
+      <div class="card">
+        <p>
+          Instancia pública en Railway: autenticación, notas cifradas en tránsito y contrato documentado en OpenAPI/Swagger.
+        </p>
+        <p class="demo-url">https://secure-notes-api-production-7360.up.railway.app</p>
+        <a
+          class="btn btn-primary"
+          href="https://secure-notes-api-production-7360.up.railway.app/docs"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Abrir /docs
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Secure Notes API</span>
+    <span class="sep">·</span>
+    <a href="https://github.com/LuisGuillemoPalaciosGiraldo/secure-notes-api" target="_blank" rel="noopener noreferrer">Repositorio en GitHub</a>
+  </footer>
+
+  <script>
+    (function () {
+      var nodes = document.querySelectorAll("[data-reveal]");
+      if (!("IntersectionObserver" in window)) {
+        nodes.forEach(function (n) {
+          n.classList.add("visible");
+        });
+        return;
+      }
+      var obs = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) {
+              e.target.classList.add("visible");
+              obs.unobserve(e.target);
+            }
+          });
+        },
+        { rootMargin: "0px 0px -8% 0px", threshold: 0.1 }
+      );
+      nodes.forEach(function (n) {
+        obs.observe(n);
+      });
+    })();
+  </script>
+</body>
+</html>
